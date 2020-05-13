@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorator="page">
+<body>
+<div th:fragment="paginater">
+    <ul th:id="paginaterUlID" th:if="${null!=page}" class="pagination pagination-sm pull-right" style="margin: 0px 8px 0px 0px;">
+        <li><a href="javascript:void(0);" th:onclick="|paginater(${page.pageNum},${page.pageSize},${id},${url})|"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span></a></li>
+        <li th:class="${page.isFirstPage}?'disabled':''" th:onclick="|paginater(1,${page.pageSize},${id},${url})|"><a href="javascript:void(0);" >首页</a></li>
+        <li th:class="${page.hasPreviousPage}?'':'disabled'"><a href="javascript:void(0);" th:onclick="|paginater(${page.pageNum}-1,${page.pageSize},${id},${url})|">上一页</a></li>
+        <li th:class="${i==page.pageNum?'active':''}" th:each="i:${#numbers.sequence(1,page.pages)}">
+            <a th:if="${page.pageNum-2<i&amp;&amp;i<page.pageNum+6&amp;&amp;i!=page.pageNum}"
+               th:text="${i}" href="javascript:void(0);" th:onclick="|paginater(${i},${page.pageSize},${id},${url})|"></a>
+            <a th:if="${i}==${page.pageNum}" href="" th:text="${i}"></a>
+            <a th:if="${i}==${page.pageNum}+6" >...</a>
+            <a th:if="${i==page.pages&amp;&amp;i!=page.pageNum&amp;&amp;page.pages>page.pageNum+6}"
+               th:text="${i}" href="javascript:void(0);" th:onclick="|paginater(${i},${page.pageSize},${id},${url})|"></a>
+        </li>
+        <li th:class="${page.hasNextPage}?'':'disabled'"><a href="javascript:void(0);" th:onclick="|paginater(${page.pageNum}+1,${page.pageSize},${id},${url})|">下一页</a></li>
+        <li th:class="${page.isLastPage}?'disabled':''"><a href="javascript:void(0);" th:onclick="|paginater(${page.pages},${page.pageSize},${id},${url})|">尾页</a></li>
+        <li class="disabled"><a th:text="${'共'+page.total+'条数据'}"></a></li>
+        <li class="disabled"><a th:text="${'共'+page.pages+'页'}"></a></li>
+        <li class="disabled"><a style="border-right: none;border-bottom: none;border-top: none;color:#23527c;">转到</a>
+        </li>
+        <li><a style="padding: 0px;margin: 0px;"><input
+                style="width: 80px;height:28px;display: inline;padding: 0px;margin: 0px;border: none;color:#23527c;"
+                id="paginater_YM_ID" type="text" min="1" max="{$pagecount}"  name="pageindex" placeholder="页码"/></a></li>
+        <li><a href="javascript:void(0);" th:onclick="|paginater('paginater_YM_ID',${page.pageSize},${id},${url})|"><span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span></a></li>
+    </ul>
+</div>
+</body>
+</html>

@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)http://getbootstrap.com/docs/4.0/examples/dashboard/ -->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>接口信息管理</title>
+    <!-- Bootstrap core CSS -->
+    <link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.css}" rel="stylesheet">
+    <link href="asserts/css/sweetalert.css" th:href="@{/webjars/bootstrap-sweetalert/1.0.1/dist/sweetalert.css}" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="asserts/css/dashboard.css" th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">
+    <!-- 显示 参数相关表 -->
+    <link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap-table/1.12.2/dist/bootstrap-table.css}" rel="stylesheet">
+    <link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/jquery-treegrid/0.2.0/css/jquery.treegrid.css}" rel="stylesheet">
+    <style type="text/css">
+        /* Chart.js */
+
+        @-webkit-keyframes chartjs-render-animation {
+            from {
+                opacity: 0.99
+            }
+            to {
+                opacity: 1
+            }
+        }
+
+        @keyframes chartjs-render-animation {
+            from {
+                opacity: 0.99
+            }
+            to {
+                opacity: 1
+            }
+        }
+
+        .chartjs-render-monitor {
+            -webkit-animation: chartjs-render-animation 0.001s;
+            animation: chartjs-render-animation 0.001s;
+        }
+    </style>
+</head>
+
+<body>
+<!--引入抽取的topbar-->
+<!--模板名：会使用thymeleaf的前后缀配置规则进行解析-->
+<div th:replace="commons/bar::topbar"></div>
+
+<div class="container-fluid">
+    <div class="row">
+        <!--引入侧边栏-->
+        <div th:replace="commons/bar::#sidebar(activeUri='interfaceInfo')"></div>
+
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+            <!--筛选部分-->
+            <div>
+                <form id="interfaceInfoQueryForm" th:action="@{/interfaceInfo}">
+                    接口所在系统 :
+                    <div class="btn-group">
+                        <select class="form-control" name="interfaceSysQuery" id="interfaceSysQuery">
+                            <option value=""> </option>
+                            <option th:selected="${iQuery!=null}?${iQuery.interfaceSysQuery == sys.systemNameEN}" th:value="${sys.systemNameEN}" th:each="sys:${sysInfoList}" th:text="${sys.systemNameEN}">1</option>
+                        </select>
+                    </div>
+
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    调用接口系统 :
+                    <div class="btn-group">
+                        <select class="form-control" name="callInterfaceSysQuery" id="callInterfaceSysQuery">
+                            <option value=""> </option>
+                            <option th:selected="${iQuery!=null}?${iQuery.callInterfaceSysQuery == sys.systemNameEN}" th:value="${sys.systemNameEN}" th:each="sys:${sysInfoList}" th:text="${sys.systemNameEN}">1</option>
+                        </select>
+                    </div>
+
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    是否纳入ISmart :
+                    <div class="btn-group">
+                        <select class="form-control" name="iSmartQuery" id="iSmartQuery">
+                            <option value=""> </option>
+                            <option th:selected="${iQuery!=null}?${iQuery.iSmartQuery == 'true'}" value="true">是</option>
+                            <option th:selected="${iQuery!=null}?${iQuery.iSmartQuery == 'false'}" value="false">否</option>
+                        </select>
+                    </div>
+
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <button type="button" class="btn btn-success" id="querySubmit">筛选</button>
+                    <button type="button" class="btn btn-secondary" id="queryReset">重置</button>
+                    <a type="button" class="btn btn-dark" id="downloadExcel" th:href="@{/downloadInterfaceInfo(interfaceSysQuery=${iQuery!=null}?${iQuery.interfaceSysQuery},callInterfaceSysQuery=${iQuery!=null}?${iQuery.callInterfaceSysQuery},iSmartQuery=${iQuery!=null}?${iQuery.iSmartQuery})}">表单下载</a>
+                </form>
+            </div><br />
+            <div>
+                <h2><a class="btn btn-sm btn-success" href="sysAdd" th:href="@{/toInterfaceInfoAddPage}">接口信息添加</a></h2>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped table-sm" id="infoTable">
+                    <thead>
+                    <tr>
+                        <th>接口所在系统</th>
+                        <th>接口业务名称</th>
+                        <th>接口方法名称</th>
+                        <th>调用接口系统</th>
+                        <th>是否纳入ISmart</th>
+                        <th>录入人</th>
+                        <th>录入时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tbody>
+                    <tr th:each="inf:${interfaceInfo.getContent()}" th:attr="id=${inf.id}">
+                        <td th:text="${inf.interfaceSystemNameEN}"></td>
+                        <td th:text="${inf.interfaceServiceName}"></td>
+                        <td th:text="${inf.interfaceMethodName}"></td>
+                        <td th:text="${inf.callInterfaceSystemNameEN}"></td>
+                        <td th:text="${inf.interfaceIsCheckInIsmart=='true'?'是':'否'}"></td>
+                        <td th:text="${inf.dataEntryEmp}"></td>
+                        <td th:text="${#dates.format(inf.dataEntryTime, 'yyyy-MM-dd')}"></td>
+                        <td>
+                            <a class="btn btn-sm btn-primary" th:href="@{/toInterfaceInfoUpdatePage/}+${inf.id}">编辑</a>
+                            <button th:attr="del_uri=@{/interfaceInfo(id=${inf.id},emp=${session.loginUser})}" class="btn btn-sm btn-danger deleteBtn">删除</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                    </tbody>
+                </table>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 col-md-6 col-lg-6">
+                    <nav aria-label="Page navigation example">
+                        <ul class="pagination">
+                            <li class="page-item" th:class="${pageInfo.currentPage==1}?'page-item disabled' : 'page-item'">
+                                <a class="page-link" href="#"  th:attr="page_no=${pageInfo.currentPage -1}" onclick="toAssignPage(this)">上一页</a>
+                            </li>
+
+
+
+                            <li class="page-item" th:if="${pageInfo.currentPage -3 >= 1}" >
+                                <a class="page-link" href="#" th:text="${pageInfo.currentPage -3}" th:attr="page_no=${pageInfo.currentPage -3}" onclick="toAssignPage(this)">1</a>
+                            </li>
+                            <li class="page-item" th:if="${pageInfo.currentPage -2 >= 1}" >
+                                <a class="page-link" href="#" th:text="${pageInfo.currentPage -2}" th:attr="page_no=${pageInfo.currentPage -2}" onclick="toAssignPage(this)">1</a>
+                            </li>
+                            <li class="page-item" th:if="${pageInfo.currentPage -1 >= 1}" >
+                                <a class="page-link" href="#" th:text="${pageInfo.currentPage -1}" th:attr="page_no=${pageInfo.currentPage -1}" onclick="toAssignPage(this)">1</a>
+                            </li>
+
+                            <li class="page-item active">
+                                <a class="page-link" href="#" th:text="${pageInfo.currentPage}">1</a>
+                            </li>
+
+                            <li class="page-item" th:if="${pageInfo.currentPage+1 <=pageInfo.totalPageSize}" >
+                                <a class="page-link" href="#" th:text="${pageInfo.currentPage +1}" th:attr="page_no=${pageInfo.currentPage +1}" onclick="toAssignPage(this)">1</a>
+                            </li>
+                            <li class="page-item" th:if="${pageInfo.currentPage+2 <=pageInfo.totalPageSize}" >
+                                <a class="page-link" href="#" th:text="${pageInfo.currentPage +2}" th:attr="page_no=${pageInfo.currentPage +2}" onclick="toAssignPage(this)">1</a>
+                            </li>
+                            <li class="page-item" th:if="${pageInfo.currentPage+3 <=pageInfo.totalPageSize}" >
+                                <a class="page-link" href="#" th:text="${pageInfo.currentPage +3}" th:attr="page_no=${pageInfo.currentPage +3}" onclick="toAssignPage(this)">1</a>
+                            </li>
+
+
+                            <li class="page-item" th:class="${pageInfo.currentPage==pageInfo.totalPageSize}?'page-item disabled' : 'page-item'">
+                                <a class="page-link" href="#" th:attr="page_no=${pageInfo.currentPage +1}" onclick="toAssignPage(this)">下一页</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                <div style="margin-top: 5px;font-size: 15px" class="col-sm-6 col-md-6 col-lg-6" >
+                    <p style="float: left" th:text="'当前第&nbsp;&nbsp;'+${pageInfo.currentPage} +'&nbsp;&nbsp;页&nbsp;&nbsp;,&nbsp;&nbsp;共&nbsp;&nbsp;'+${pageInfo.totalPageSize}+'&nbsp;&nbsp;页&nbsp;&nbsp;,&nbsp;&nbsp;共&nbsp;&nbsp;' + ${pageInfo.totalElementNum}+'&nbsp;&nbsp;条记录,&nbsp;&nbsp;每页&nbsp;&nbsp;'"></p>
+
+                    <select id="pageSize" style="float: left">
+                        <option th:selected="${pageInfo.pageSize == 20}">20</option>
+                        <option th:selected="${pageInfo.pageSize == 50}">50</option>
+                        <option th:selected="${pageInfo.pageSize == 100}">100</option>
+                    </select>
+                    <p style="float: left">&nbsp;&nbsp;条记录</p>
+                </div>
+
+            </div>
+
+        </main>
+        <form id="deleteSystemInfoForm"  method="post">
+            <input type="hidden" name="_method" value="delete"/>
+        </form>
+    </div>
+</div>
+
+<!-- 参数模态框 -->
+<div class="modal fade" id="interfaceInfoShowModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <!-- 模态框头部
+            <div class="modal-header">
+                <h4 class="modal-title">参数信息</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            -->
+            <!-- 模态框主体 -->
+            <div class="modal-body">
+                <form id="paramInfoForm" method="post">
+                    <div class="table-borderless">
+                        <table class="table table-bordered table-sm" id="infoT1">
+                            <thead>
+                            <tr class="bg-info">
+                                <th>接口所在系统名称</th>
+                                <th>接口业务名称</th>
+                                <th>接口业务描述</th>
+                                <th>接口方法名称</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-borderless">
+                        <table class="table table-bordered table-sm" id="infoT2">
+                            <thead>
+                            <tr class="bg-info">
+                                <th>接口访问地址</th>
+                                <th>接口业务所属部门</th>
+                                <th>接口业务所属组</th>
+                                <th>接口业务联系人名称</th>
+                                <th>接口业务联系人电话</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-borderless">
+                        <table class="table table-bordered table-sm" id="infoT3">
+                            <thead>
+                            <tr class="bg-info">
+                                <th>调用接口的系统名称</th>
+                                <th>调用接口方式</th>
+                                <th>调用接口频率</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-borderless">
+                        <table class="table table-bordered table-sm" id="infoT4">
+                            <thead>
+                            <tr class="bg-info">
+                                <th>调用接口部门</th>
+                                <th>调用接口组</th>
+                                <th>调用接口联系人</th>
+                                <th>调用接口联系电话</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-borderless">
+                        <table class="table table-bordered table-sm" id="infoT5">
+                            <thead>
+                            <tr class="bg-info">
+                                <th>是否纳入iSmart</th>
+                                <th>是否有白名单</th>
+                                <th>接口备注</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-borderless">
+                        <table class="table table-bordered table-sm" id="infoT6">
+                            <thead>
+                            <tr class="bg-info">
+                                <th>插入人</th>
+                                <th>插入时间</th>
+                                <th>更新人</th>
+                                <th>更新时间</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+
+
+
+                    <div class="form-group">
+                        <div class="col-sm-6 col-md-6 col-lg-6" id="interfaceHasParametersDiv" style="float:left; display:inline">
+                            <label>是否需要参数</label>
+                            <input id="interfaceHasParameters" type="text" class="form-control" readonly="readonly">
+                        </div>
+                        <div class="col-sm-6 col-md-6 col-lg-6" id="paramDiv" style="float:left; display:inline">
+                            <label>接口参数</label>
+                            <table id="table"></table>
+                        </div>
+
+                        <div class="col-sm-6 col-md-6 col-lg-6" id="interfaceHasReturnedValueDiv" style="float:left; display:inline">
+                            <label>接口是否有返回值</label>
+                            <input id="interfaceHasReturnedValue" type="text" class="form-control" readonly="readonly">
+                        </div>
+                        <div class="col-sm-6 col-md-6 col-lg-6" id="retuenParamDiv" style="float:left; display:inline">
+                            <label>接口返回值</label>
+                            <table id="returnParamTable"></table>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 模态框底部
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="confirm">确认</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div>
+            -->
+            <form id="queryForm"  method="get" th:action="@{/interfaceInfo}">
+                <input type="hidden" name="interfaceSysQuery" id="qf_interfaceSysQuery"/>
+                <input type="hidden" name="callInterfaceSysQuery" id="qf_callInterfaceSysQuery"/>
+                <input type="hidden" name="iSmartQuery" id="qf_iSmartQuery"/>
+                <input type="hidden" name="currentPage" id="qf_currentPage" th:value="${pageInfo.currentPage}"/>
+                <input type="hidden" name="pageSize" id="qf_pageSize" th:value="${pageInfo.pageSize}"/>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/jquery/3.3.1/jquery.js}"></script>
+<script type="text/javascript" src="asserts/js/popper.min.js" th:src="@{/webjars/popper.js/1.11.1/dist/umd/popper.js}"></script>
+<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/4.0.0/js/bootstrap.js}"></script>
+
+<script type="text/javascript" src="js/sweetalert.min.js" th:src="@{/webjars/bootstrap-sweetalert/1.0.1/dist/sweetalert.js}"></script>
+<script type="text/javascript" src="js/promise.min.js" th:src="@{/webjars/es6-promise/4.2.8/dist/es6-promise.auto.js}"></script>
+<!-- Icons -->
+<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
+<!-- 参数表 -->
+<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/bootstrap-table/1.12.2/dist/bootstrap-table.js}"></script>
+<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/bootstrap-table/1.12.2/dist/extensions/treegrid/bootstrap-table-treegrid.js}"></script>
+<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/jquery-treegrid/0.2.0/js/jquery.treegrid.js}"></script>
+
+<script>
+    feather.replace()
+</script>
+<script th:inline="javascript">
+    $(".deleteBtn").click(function(){
+        debugger;
+        //删除当前员工的
+        // $("#deleteSystemInfoForm").attr("action",$(this).attr("del_uri")).submit();
+        // return false;
+        var del_uri = $(this).attr("del_uri");
+
+        swal({
+            title: "确定？",
+            text: "确认删除嘛?",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "是",
+            cancelButtonText: "否",
+            closeOnConfirm: false
+        }, function() {
+            debugger;
+            //var vv = $(this).attr("del_uri");
+            //swal("删除!", "您的虚构文件已被删除！", "success")
+            $("#deleteSystemInfoForm").attr("action",del_uri).submit();
+
+            return false;
+        })
+    });
+
+    $(document).ready(function() {
+        debugger;
+        var sucMsg= [[${sucMsg}]];
+        if (sucMsg!=null){
+
+            if (sucMsg.successStatus == true){
+                swal({
+                    title: "成功!",
+                    text: sucMsg.successMsg,
+                    type: "success",
+                    //confirmButtonText: "确定"
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }else{
+                swal({
+                    title: "异常!",
+                    text: sucMsg.successMsg,
+                    type: "warning",
+                    confirmButtonText: "确定"
+                });
+            }
+        }
+        //注册双击事件的响应
+        $("#infoTable tr td").dblclick(function() {
+            //获取双击行 的接口信息id
+            var id = $(this).parent('tr').attr('id');
+            var paramData = {"id": id}
+            //进行Ajax查询后显示一个模态框
+            $.ajax({
+                //几个参数需要注意一下
+                type: "GET",//方法类型
+                dataType: "json",//预期服务器返回的数据类型
+                url: "/interfaceInfoById" ,//url
+                data: paramData,
+                success: function (result) {
+                    debugger;
+                    // $("#infoT1  tr:not(:first)").empty("");
+                    // var tr1 = "<tr>" +"<td>"+ result.interfaceSystemNameEN +"-"+ result.interfaceSystemName +"</td>"
+                    //     +"<td>"+ result.interfaceServiceName +"</td>"
+                    //     +"<td>"+ result.interfaceServiceDes +"</td>"
+                    //     +"<td>"+ result.interfaceMethodName +"</td>"
+                    //     + "</tr>>";
+                    // $("#infoT1").append(tr1);
+                    putTrIntoTable("infoT1", result.interfaceSystemNameEN +"-"+ result.interfaceSystemName, result.interfaceServiceName,
+                        result.interfaceServiceDes, result.interfaceMethodName);
+                    putTrIntoTable("infoT2", result.interfaceCallAddress, result.interfaceServiceDept, result.interfaceServiceGroup,
+                        result.interfaceServiceLinkmanName, result.interfaceServiceLinkmanPhone);
+                    putTrIntoTable("infoT3", result.callInterfaceSystemNameEN+"-"+result.callInterfaceSystemName, result.callInterfaceType,
+                        result.callInterfaceFrequency);
+                    putTrIntoTable("infoT4", result.callInterfaceDept, result.callInterfaceGroup,
+                        result.callInterfaceLinkmanName, result.callInterfaceLinkmanPhone);
+                    putTrIntoTable("infoT5", result.interfaceIsCheckInIsmart=="ture"?"是":"否", result.interfaceHasWhiteList=="ture"?"是":"否",
+                        result.interfaceComment);
+                    //2020-05-06T07:01:52.000+0000
+
+                    putTrIntoTable("infoT6", result.dataEntryEmp, result.dataEntryTime,
+                        result.dataEntryUpdateEmp==null?"":result.dataEntryUpdateEmp, result.dataEntryUpdateTime==null?"":result.dataEntryUpdateTime);
+
+                    var interfaceHasParameters = result.interfaceHasParameters;
+                    var interfaceHasReturnedValue = result.interfaceHasReturnedValue;
+                    if (interfaceHasParameters == "true"){
+                        $("#interfaceHasParametersDiv").hide();
+                        $("#paramDiv").show();
+                        var paramData = JSON.parse(result.interfaceParameters);
+                        refreshTable(paramData);
+                        $("#interfaceHasParameters").val("是");
+                    }else {
+                        $("#paramDiv").hide();
+                        $("#interfaceHasParametersDiv").show();
+                        $("#interfaceHasParameters").val("否");
+                    }
+
+                    if (interfaceHasReturnedValue == "true"){
+                        $("#interfaceHasReturnedValueDiv").hide();
+                        $("#retuenParamDiv").show();
+                        var paramData = JSON.parse(result.interfaceReturnedValue);
+                        refreshreturnParamTabel(paramData);
+                        $("#interfaceHasReturnedValue").val("是");
+                    }else {
+                        $("#retuenParamDiv").hide();
+                        $("#interfaceHasReturnedValue").val("否");
+                        $("#interfaceHasReturnedValueDiv").show();
+                    }
+                    $("#interfaceInfoShowModal").modal("show");
+                },
+                error : function() {
+                    alert("异常！");
+                }
+            });
+
+
+            //alert($(this).attr('id'));
+            //alert($(this).parent('tr').attr('id'));
+        });
+        //refreshTable();
+
+
+
+    });
+
+
+
+
+
+    //下载表单
+    // $("#downloadExcel").click(function () {
+    //     var paramData = {"interfaceSysQuery": $("#interfaceSysQuery").val(), "callInterfaceSysQuery": $("#callInterfaceSysQuery").val(), "iSmartQuery": $("#iSmartQuery").val()}
+    //     //进行Ajax查询后显示一个模态框
+    //     $.ajax({
+    //         //几个参数需要注意一下
+    //         type: "GET",//方法类型
+    //         dataType: "json",//预期服务器返回的数据类型
+    //         url: "/downloadInterfaceInfo" ,//url
+    //         data: paramData
+    //     });
+    // });
+
+    $("#queryReset").click(function () {
+        window.location.href="/interfaceInfoMain";
+        // set_select_checked("interfaceSysQuery","");
+        // set_select_checked("callInterfaceSysQuery","");
+        // set_select_checked("iSmartQuery","");
+        //
+        //
+        // $("#interfaceInfoQueryForm").submit();
+    });
+    
+    
+
+
+    function putTrIntoTable() {
+        var tableID ;
+        var arr = [];
+        debugger;
+        for(var i in arguments){
+            if (i == 0){
+                tableID = arguments[i];
+            }else{
+                if(arguments[i]!="")
+                    arr.push(arguments[i]);
+                else
+                    arr.push("空");
+            }
+
+        }
+        $("#"+tableID+" tr:not(:first)").empty("");
+        var tr1 = "<tr>";
+        for(var m in arr){
+            tr1 += "<td>";
+            tr1 += arr[m];
+            tr1 += "</td>"
+        }
+        tr1 += "</tr>";
+        debugger;
+        // var tr1 = "<tr>" +"<td>"+ result.interfaceSystemNameEN +"-"+ result.interfaceSystemName +"</td>"
+        //     +"<td>"+ result.interfaceServiceName +"</td>"
+        //     +"<td>"+ result.interfaceServiceDes +"</td>"
+        //     +"<td>"+ result.interfaceMethodName +"</td>"
+        //     + "</tr>";
+        $("#"+tableID).append(tr1);
+
+
+    }
+    function set_select_checked(selectId, checkValue){
+        var select = document.getElementById(selectId);
+
+        for (var i = 0; i < select.options.length; i++){
+            if (select.options[i].text == checkValue){
+                select.options[i].selected = true;
+                break;
+            }
+        }
+    }
+    // 格式化状态
+    function statusFormatter(value, row, index) {
+        // if (value === 1) {
+        //     return '<span class="btn btn-primary">正常</span>';
+        // } else {
+        //     return '<span class="btn btn-primary">锁定</span>';
+        // }
+        return '<span>' + value +'</span>';
+    }
+
+    function refreshreturnParamTabel(data){
+        var $table = $('#returnParamTable');
+        $table.bootstrapTable('destroy').bootstrapTable({
+            data:data,
+            idField: 'id',
+            dataType:'jsonp',
+            columns: [
+                { field: 'id',  title: '序号' },
+                { field: 'name',  title: '参数名称' },
+                // {field: 'id', title: '编号', sortable: true, align: 'center'},
+                // {field: 'pid', title: '所属上级'},
+                { field: 'type',  title: '参数类型', sortable: true,  align: 'center', formatter: 'statusFormatter'  },
+                { field: 'des', title: '描述'  },
+            ],
+            //在哪一列展开树形
+            treeShowField: 'name',
+            //指定父id列
+            parentIdField: 'pid',
+            onResetView: function(data) {
+                //console.log('load');
+                $table.treegrid({
+                    //initialState: 'collapsed',// 所有节点都折叠
+                    initialState: 'expanded',// 所有节点都展开，默认展开
+                    treeColumn: 1,
+                    // expanderExpandedClass: 'glyphicon glyphicon-minus',  //图标样式
+                    // expanderCollapsedClass: 'glyphicon glyphicon-plus',
+                    onChange: function() {
+                        $table.bootstrapTable('resetWidth');
+                    }
+                });
+            },
+        });
+    }
+
+    //初始化模态框中的table
+    function refreshTable(data){
+        var $table = $('#table');
+        $table.bootstrapTable('destroy').bootstrapTable({
+            data:data,
+            idField: 'id',
+            dataType:'jsonp',
+            columns: [
+                { field: 'id',  title: '序号' },
+                { field: 'name',  title: '参数名称' },
+                // {field: 'id', title: '编号', sortable: true, align: 'center'},
+                // {field: 'pid', title: '所属上级'},
+                { field: 'type',  title: '参数类型', sortable: true,  align: 'center', formatter: 'statusFormatter'  },
+                { field: 'des', title: '描述'  },
+            ],
+            //在哪一列展开树形
+            treeShowField: 'name',
+            //指定父id列
+            parentIdField: 'pid',
+            onResetView: function(data) {
+                //console.log('load');
+                $table.treegrid({
+                    //initialState: 'collapsed',// 所有节点都折叠
+                    initialState: 'expanded',// 所有节点都展开，默认展开
+                    treeColumn: 1,
+                    // expanderExpandedClass: 'glyphicon glyphicon-minus',  //图标样式
+                    // expanderCollapsedClass: 'glyphicon glyphicon-plus',
+                    onChange: function() {
+                        $table.bootstrapTable('resetWidth');
+                    }
+                });
+            },
+        });
+    }
+
+
+    function paginater(pageNum,pageSize,id) {
+        var form ;
+        if(null==id||''==id){
+            form = $("form").first();
+        }else{
+            form = $("#"+id);
+        }
+        if("paginater_YM_ID"==pageNum){
+            pageNum = $("#paginater_YM_ID").val();
+        }
+        form.append("<input type='text' value='"+pageNum+"' id='pageNum' name='pageNum' style='display: none'/>");
+        form.append("<input type='text' value='"+pageSize+"' id='pageSize' name='pageSize' style='display: none'/>");
+        form.submit();
+    }
+    function toAssignPage(pageNo) {
+        debugger;
+        var pageNo = $(pageNo).attr("page_no");
+
+        var pageSize = $("#pageSize").val();
+
+        $("#qf_pageSize").val(pageSize);
+        $("#qf_currentPage").val(pageNo);
+
+        $("#qf_callInterfaceSysQuery").val($("#callInterfaceSysQuery").val());
+        $("#qf_interfaceSysQuery").val($("#interfaceSysQuery").val());
+        $("#qf_iSmartQuery").val($("#iSmartQuery").val());
+
+        $("#queryForm").submit();
+        //window.location.href="/interfaceInfo?currentPage=" + pageNo +"&pageSize="+pageSize;
+    }
+
+    $("#querySubmit").click(function () {
+        //$("#interfaceInfoQueryForm").submit();
+
+        var pageSize = $("#pageSize").val();
+        $("#qf_pageSize").val(pageSize);
+        $("#qf_currentPage").val(1);
+
+        $("#qf_callInterfaceSysQuery").val($("#callInterfaceSysQuery").val());
+        $("#qf_interfaceSysQuery").val($("#interfaceSysQuery").val());
+        $("#qf_iSmartQuery").val($("#iSmartQuery").val());
+        $("#queryForm").submit();
+    });
+
+    $("#pageSize").change(function () {
+        var pageSize = $("#pageSize").val();
+        $("#qf_pageSize").val(pageSize);
+        $("#qf_currentPage").val(1);
+
+        $("#qf_callInterfaceSysQuery").val($("#callInterfaceSysQuery").val());
+        $("#qf_interfaceSysQuery").val($("#interfaceSysQuery").val());
+        $("#qf_iSmartQuery").val($("#iSmartQuery").val());
+
+        $("#queryForm").submit();
+    });
+
+</script>
+
+</body>
+</html>

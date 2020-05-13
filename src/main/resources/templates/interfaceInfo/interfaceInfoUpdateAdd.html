@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)http://getbootstrap.com/docs/4.0/examples/dashboard/ -->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>系统信息添加</title>
+    <!-- Bootstrap core CSS -->
+    <link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.css}" rel="stylesheet">
+
+    <link href="asserts/css/sweetalert.css" th:href="@{/webjars/bootstrap-sweetalert/1.0.1/dist/sweetalert.css}" rel="stylesheet">
+    <!-- Custom styles for this template -->
+    <link href="asserts/css/dashboard.css" th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">
+    <!-- 显示 参数相关表 -->
+    <link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap-table/1.12.2/dist/bootstrap-table.css}" rel="stylesheet">
+    <link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/jquery-treegrid/0.2.0/css/jquery.treegrid.css}" rel="stylesheet">
+    <style type="text/css">
+        /* Chart.js */
+
+        @-webkit-keyframes chartjs-render-animation {
+            from {
+                opacity: 0.99
+            }
+            to {
+                opacity: 1
+            }
+        }
+
+        @keyframes chartjs-render-animation {
+            from {
+                opacity: 0.99
+            }
+            to {
+                opacity: 1
+            }
+        }
+
+        .chartjs-render-monitor {
+            -webkit-animation: chartjs-render-animation 0.001s;
+            animation: chartjs-render-animation 0.001s;
+        }
+    </style>
+</head>
+
+<body>
+<!--引入抽取的topbar-->
+<!--模板名：会使用thymeleaf的前后缀配置规则进行解析-->
+<div th:replace="commons/bar::topbar"></div>
+
+<div class="container-fluid">
+    <div class="row">
+        <!--引入侧边栏-->
+        <div th:replace="commons/bar::#sidebar(activeUri='interfaceInfo')"></div>
+
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+
+            <form th:action="@{/interfaceInfo}" method="post" id="interfaceInfoUpdateForm">
+                <input type="hidden" name="_method" value="put"/>
+                <input type="hidden" name="id" th:value="${iInfo.id}">
+                <input type="hidden" name="dataEntryUpdateEmp" th:value="${session.loginUser}">
+                <input type="hidden" name="dataEntryEmp" th:value="${iInfo.dataEntryEmp}">
+                <input type="hidden" name="dataEntryTime" th:value="${iInfo.dataEntryTime}">
+
+                <div class="form-group">
+                    <label>接口所在系统</label>
+                    <select class="form-control" name="interfaceSystemNameEN" id="interfaceSystemNameEN">
+                        <option th:selected="${iInfo!=null}?${iInfo.interfaceSystemNameEN == sys.systemNameEN}" th:value="${sys.systemNameEN}" th:each="sys:${sysInfoList}" th:text="${sys.systemNameEN}">1</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>接口业务名称</label>
+                    <input id="interfaceServiceName" name="interfaceServiceName" type="text" class="form-control" th:value="${iInfo.interfaceServiceName}">
+                </div>
+                <div class="form-group">
+                    <label>接口业务描述</label>
+                    <input id="interfaceServiceDes" name="interfaceServiceDes" type="text" class="form-control" th:value="${iInfo.interfaceServiceDes}">
+                </div>
+                <div class="form-group">
+                    <label>接口方法名称</label>
+                    <input id="interfaceMethodName" name="interfaceMethodName" type="text" class="form-control" th:value="${iInfo.interfaceMethodName}">
+                </div>
+                <div class="form-group">
+                    <label>接口访问地址</label>
+                    <input id="interfaceCallAddress" name="interfaceCallAddress" type="text" class="form-control" th:value="${iInfo.interfaceCallAddress}">
+                </div>
+                <div class="form-group">
+                    <label>接口方法是否需要参数</label>
+                    <select class="form-control" name="interfaceHasParameters" id="interfaceHasParameters">
+                        <option value="true" th:selected="${iInfo.interfaceHasParameters == 'true'}">是</option>
+                        <option value="false" th:selected="${iInfo.interfaceHasParameters == 'false'}">否</option>
+                    </select>
+                </div>
+                <div class="form-group" id="paramDiv" style="display:none;">
+                    <label>接口方法参数</label>
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="addParameter()" style="margin-bottom: 5px">新增参数</button>
+                    <table id="table"></table>
+                    <input type="hidden" name="interfaceParameters" id="interfaceParameters">
+                </div>
+                <div class="form-group">
+                    <label>接口是否有返回值</label>
+                    <select class="form-control" name="interfaceHasReturnedValue" id="interfaceHasReturnedValue">
+                        <option value="true" th:selected="${iInfo.interfaceHasReturnedValue == 'true'}">是</option>
+                        <option value="false" th:selected="${iInfo.interfaceHasReturnedValue == 'false'}">否</option>
+                    </select>
+                </div>
+                <div class="form-group" id="returnParamDiv" style="display:none;">
+                    <label>接口返回值参数</label>
+                    <button type="button" class="btn btn-outline-info btn-sm" onclick="addReturnParameter()" style="margin-bottom: 5px">新增返回值参数</button>
+                    <table id="returnParamTable"></table>
+                    <input type="hidden" name="interfaceReturnedValue" id="interfaceReturnedValue">
+                </div>
+
+                <div class="form-group">
+                    <label>接口业务所属部门</label>
+                    <input id="interfaceServiceDept" name="interfaceServiceDept" type="text" class="form-control" th:value="${iInfo.interfaceServiceDept}" >
+                </div>
+                <div class="form-group">
+                    <label>接口业务所属组</label>
+                    <input id="interfaceServiceGroup" name="interfaceServiceGroup" type="text" class="form-control" th:value="${iInfo.interfaceServiceGroup}" >
+                </div>
+                <div class="form-group">
+                    <label>接口业务联系人名称</label>
+                    <input id="interfaceServiceLinkmanName" name="interfaceServiceLinkmanName" type="text" class="form-control" th:value="${iInfo.interfaceServiceLinkmanName}" >
+                </div>
+                <div class="form-group">
+                    <label>接口业务联系人电话</label>
+                    <input id="interfaceServiceLinkmanPhone" name="interfaceServiceLinkmanPhone" type="text" class="form-control" th:value="${iInfo.interfaceServiceLinkmanPhone}" >
+                </div>
+
+                <div class="form-group">
+                    <label>调用接口的系统</label>
+                    <select class="form-control" name="callInterfaceSystemNameEN" id="callInterfaceSystemNameEN">
+                        <option th:selected="${iInfo!=null}?${iInfo.callInterfaceSystemNameEN == sys.systemNameEN}" th:value="${sys.systemNameEN}" th:each="sys:${sysInfoList}" th:text="${sys.systemNameEN}">1</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>调用接口方式</label>
+                    <input id="callInterfaceType" name="callInterfaceType" type="text" class="form-control" th:value="${iInfo.callInterfaceType}" >
+                </div>
+                <div class="form-group">
+                    <label>调用接口频率</label>
+                    <input id="callInterfaceFrequency" name="callInterfaceFrequency" type="text" class="form-control" th:value="${iInfo.callInterfaceFrequency}" >
+                </div>
+                <div class="form-group">
+                    <label>调用接口部门</label>
+                    <input id="callInterfaceDept" name="callInterfaceDept" type="text" class="form-control" th:value="${iInfo.callInterfaceDept}" >
+                </div>
+                <div class="form-group">
+                    <label>调用接口组</label>
+                    <input id="callInterfaceGroup" name="callInterfaceGroup" type="text" class="form-control" th:value="${iInfo.callInterfaceGroup}" >
+                </div>
+                <div class="form-group">
+                    <label>调用接口联系人</label>
+                    <input id="callInterfaceLinkmanName" name="callInterfaceLinkmanName" type="text" class="form-control" th:value="${iInfo.callInterfaceLinkmanName}" >
+                </div>
+                <div class="form-group">
+                    <label>调用接口联系电话</label>
+                    <input id="callInterfaceLinkmanPhone" name="callInterfaceLinkmanPhone" type="text" class="form-control" th:value="${iInfo.callInterfaceLinkmanPhone}" >
+                </div>
+                <div class="form-group">
+                    <label>是否纳入ismart</label>
+                    <select class="form-control" name="interfaceIsCheckInIsmart" id="interfaceIsCheckInIsmart">
+                        <option value="true" th:selected="${iInfo.interfaceIsCheckInIsmart == 'true'}">是</option>
+                        <option value="false" th:selected="${iInfo.interfaceIsCheckInIsmart == 'false'}">否</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>是否有白名单</label>
+                    <select class="form-control" name="interfaceHasWhiteList" id="interfaceHasWhiteList">
+                        <option value="true" th:selected="${iInfo.interfaceHasWhiteList == 'true'}">是</option>
+                        <option value="false" th:selected="${iInfo.interfaceHasWhiteList == 'false'}">否</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>接口备注</label>
+                    <input id="interfaceComment" name="interfaceComment" type="text" class="form-control" th:value="${iInfo.interfaceComment}" >
+                </div>
+
+                <button id="paramSubmit" class="btn btn-primary">修改</button>
+            </form>
+        </main>
+    </div>
+</div>
+
+<!-- 参数模态框 -->
+<div class="modal fade" id="parameterModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <!-- 模态框头部 -->
+            <div class="modal-header">
+                <h4 class="modal-title">参数信息</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- 模态框主体 -->
+            <div class="modal-body">
+                <form id="paramInfoForm" method="post">
+                    <div class="form-group">
+                        <label>参数类型</label>
+                        <input id="paramType" name="paramType" type="text" class="form-control" placeholder="默认：String">
+                        <input id="pid"  type="hidden">
+                        <input id="insertParamType" type="hidden">
+                    </div>
+                    <div class="form-group">
+                        <label>参数名</label>
+                        <input id="paramName" name="paramName" type="text" class="form-control" placeholder="例：interfaceName">
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <input id="paramDes" name="paramDes" type="text" class="form-control" placeholder="例：表示接口名称">
+                    </div>
+                </form>
+            </div>
+
+            <!-- 模态框底部 -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="confirm">确认</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- 参数更新模态框 -->
+<div class="modal fade" id="parameterModalUpdate">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <!-- 模态框头部 -->
+            <div class="modal-header">
+                <h4 class="modal-title">参数信息</h4>
+                <button type="button"  class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- 模态框主体 -->
+            <div class="modal-body">
+                <form id="paramInfoUpdateForm" method="post">
+                    <div class="form-group">
+                        <label>参数类型</label>
+                        <input id="paramTypeUpdate" name="paramType" type="text" class="form-control">
+                        <input id="pidUpdate"  type="hidden">
+                        <input id="idUpdate"  type="hidden">
+                        <input id="index"  type="hidden">
+                    </div>
+                    <div class="form-group">
+                        <label>参数名</label>
+                        <input id="paramNameUpdate" name="paramName" type="text" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <input id="paramDesUpdate" name="paramDes" type="text" class="form-control">
+                    </div>
+                </form>
+            </div>
+
+            <!-- 模态框底部 -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="parameterInfoUpdateConfirm">确认</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/jquery/3.3.1/jquery.js}"></script>
+<script type="text/javascript" src="asserts/js/popper.min.js" th:src="@{/webjars/popper.js/1.11.1/dist/umd/popper.js}"></script>
+<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/4.0.0/js/bootstrap.js}"></script>
+
+<script type="text/javascript" src="js/sweetalert.min.js" th:src="@{/webjars/bootstrap-sweetalert/1.0.1/dist/sweetalert.js}"></script>
+<script type="text/javascript" src="js/promise.min.js" th:src="@{/webjars/es6-promise/4.2.8/dist/es6-promise.auto.js}"></script>
+<!-- Icons -->
+<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
+<!-- 参数表 -->
+<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/bootstrap-table/1.12.2/dist/bootstrap-table.js}"></script>
+<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/bootstrap-table/1.12.2/dist/extensions/treegrid/bootstrap-table-treegrid.js}"></script>
+<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/jquery-treegrid/0.2.0/js/jquery.treegrid.js}"></script>
+
+
+<script>
+    feather.replace()
+</script>
+<script th:inline="javascript">
+
+    $(document).ready(function() {
+        //由于更新中需要新增操作，需要知道之前插入到了什么位置
+        var indexArr = [];
+
+        //更新页面需要判断如果接口需要参数或是返回值就自动显示参数表，默认隐藏
+        var hasParam = [[${iInfo.interfaceHasParameters}]];
+        var hasReturnedValue = [[${iInfo.interfaceHasReturnedValue}]];
+        debugger;
+        if(hasParam == "true"){
+            $("#paramDiv").show();
+            var paramData = JSON.parse([[${iInfo.interfaceParameters}]]);
+            for (var i = 0; i < paramData.length; i++) {
+                indexArr.push(paramData[i].id);
+                indexArr.push(paramData[i].pid);
+            }
+            refreshTable(paramData);
+        }else {
+            refreshTable();
+        }
+        if(hasReturnedValue == "true"){
+            $("#returnParamDiv").show();
+            var returnParamData = JSON.parse([[${iInfo.interfaceReturnedValue}]]);
+            for (var i = 0; i < returnParamData.length; i++) {
+                indexArr.push(returnParamData[i].id);
+                indexArr.push(returnParamData[i].pid);
+            }
+            refreshreturnParamTabel(returnParamData);
+        }else {
+            refreshreturnParamTabel();
+        }
+        debugger;
+
+        var max = indexArr[0];    //首先定义第一个数为最大数
+        if (indexArr.length<2) {return max;}
+        for (var i = 1; i<indexArr.length; i++) {
+            if(indexArr[i]>max){max=indexArr[i];}  
+        }
+        debugger;
+        var maxIndex = max+1 ;
+        itemId = maxIndex;
+        //重定向页面时，显示提示信息框
+        var sucMsg= [[${sucMsg}]];
+        if (sucMsg!=null){
+            if (sucMsg.successStatus == true){
+                swal({
+                    title: "成功!",
+                    text: sucMsg.successMsg,
+                    //type: "success",
+                    //confirmButtonText: "确定"
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }else{
+                swal({
+                    title: "异常!",
+                    text: sucMsg.successMsg,
+                    type: "warning",
+                    confirmButtonText: "确定"
+                });
+            }
+        }
+        //ajax实现动态校验是否信息重复
+        //$("#systemName").blur(checkSystemName);
+        //$("#systemNameEN").blur(checkSystemNameEN);
+    });
+    $("#interfaceHasParameters").change(function () {
+        debugger;
+        var optVal = $("#interfaceHasParameters").val();
+        if(optVal == "true"){
+            $("#paramDiv").show();
+        }else {
+            $("#paramDiv").hide();
+        }
+    });
+    $("#interfaceHasReturnedValue").change(function () {
+        debugger;
+        var optVal = $("#interfaceHasReturnedValue").val();
+        if(optVal == "true"){
+            $("#returnParamDiv").show();
+        }else {
+            $("#returnParamDiv").hide();
+        }
+    });
+</script>
+</body>
+<script type="text/javascript">
+
+    function transRowsToJson(tableRows) {
+        var objArr = [];
+        for (var i = 0; i < tableRows.length; i++) {
+            var obj = {};
+            obj.id = tableRows[i].id;
+            obj.pid = tableRows[i].pid;
+            obj.type = tableRows[i].type;
+            obj.name = tableRows[i].name;
+            obj.des= tableRows[i].des;
+            objArr.push(obj);
+        }
+        var jsonStr = JSON.stringify(objArr);
+        return jsonStr;
+    }
+    $("#paramSubmit").click(function () {
+        //submit前需要对参数进行修改\
+        // debugger;
+        //
+        // var fields = $('#interfaceInfoAddForm').serializeArray();
+        // var obj = {}; //声明一个对象
+        // $.each(fields, function(index, field) {
+        //     obj[field.name] = field.value; //通过变量，将属性值，属性一起放到对象中
+        // })
+        //
+        // var jsonData = JSON.stringify(obj);
+        // debugger;
+        var tableRows = $('#table').bootstrapTable('getData');
+
+        $("#interfaceParameters").val(transRowsToJson(tableRows));
+        var returnParamTableRows = $('#returnParamTable').bootstrapTable('getData');
+        $("#interfaceReturnedValue").val(transRowsToJson(returnParamTableRows));
+        //提交数据
+        debugger;
+        if ($("#interfaceServiceName").val()==""){
+            swal({
+                title: "异常!",
+                text: "接口业务名称不能为空",
+                type: "warning",
+                confirmButtonText: "确定"
+            });
+        }else if ($("#interfaceMethodName").val()==""){
+            swal({
+                title: "异常!",
+                text: "接口方法名称不能为为空",
+                type: "warning",
+                confirmButtonText: "确定"
+            });
+        }else{
+            $("#interfaceInfoUpdateForm").submit();
+        }
+
+
+
+        // var paramData = $('#interfaceInfoAddForm').serializeArray();
+        // for (var i = 0; i < paramData.length; i++) {
+        //     var pName = paramData[i].name;
+        //     if (pName == "interfaceServiceName") {
+        //         debugger;
+        //         paramData[i].value = "看看行不行";
+        //     }
+        // }
+        // $.ajax({
+        //     //几个参数需要注意一下
+        //     type: "POST",//方法类型
+        //     dataType: "json",//预期服务器返回的数据类型
+        //     url: "/interfaceInfoAdd" ,//url
+        //     data: paramData,
+        //     success: function (result) {
+        //         window.location.href ="/systemInfo";
+        //     },
+        //     error : function() {
+        //         alert("异常！");
+        //     }
+        // });
+
+        return false;
+    });
+
+    //方法参数表
+    var $table = $('#table');
+    //var data = JSON.parse('[{"id":1,"pid":0,"type":"所需参数","name":"参数名","des":""},{"id":2,"pid":1,"type":"所需参数1","name":"参数名1","des":""}]');
+
+    //var data1 = JSON.parse('[{"id":1,"pid":0,"type":"所需参数","name":"参数名","des":""},{"id":2,"pid":1,"type":"所需参数1","name":"参数名1","des":""}]');
+
+    //方法返回值表
+    var $returnParamTable = $('#returnParamTable');
+
+    function refreshreturnParamTabel(data) {
+        $returnParamTable.bootstrapTable({
+            data:data,
+            idField: 'id',
+            dataType:'jsonp',
+            columns: [
+                // { field: 'check',  checkbox: true, formatter: function (value, row, index) {
+                //         if (row.check == true) {
+                //             // console.log(row.serverName);
+                //             //设置选中
+                //             return {  checked: true };
+                //         }
+                //     }
+                // },
+                { field: 'id',  title: '序号' },
+                { field: 'name',  title: '参数名称' },
+                // {field: 'id', title: '编号', sortable: true, align: 'center'},
+                // {field: 'pid', title: '所属上级'},
+                { field: 'type',  title: '参数类型', sortable: true,  align: 'center', formatter: 'statusFormatter'  },
+                { field: 'des', title: '描述'  },
+                { field: 'operate', title: '操作', align: 'center', events : operateEvents, formatter: 'returnParamOperateFormatter' },
+            ],
+
+            // bootstrap-table-treegrid.js 插件配置 -- start
+
+            //在哪一列展开树形
+            treeShowField: 'name',
+            //指定父id列
+            parentIdField: 'pid',
+
+            onResetView: function(data) {
+                //console.log('load');
+                $returnParamTable.treegrid({
+                    //initialState: 'collapsed',// 所有节点都折叠
+                    initialState: 'expanded',// 所有节点都展开，默认展开
+                    treeColumn: 1,
+                    // expanderExpandedClass: 'glyphicon glyphicon-minus',  //图标样式
+                    // expanderCollapsedClass: 'glyphicon glyphicon-plus',
+                    onChange: function() {
+                        $returnParamTable.bootstrapTable('resetWidth');
+                    }
+                });
+
+                //只展开树形的第一级节点
+                //$table.treegrid('getRootNodes').treegrid('expand');
+
+            },
+            onCheck:function(row){
+                var datas = $returnParamTable.bootstrapTable('getData');
+                // 勾选子类
+                selectChilds(datas,row,"id","pid",true);
+
+                // 勾选父类
+                selectParentChecked(datas,row,"id","pid")
+
+                // 刷新数据
+                $returnParamTable.bootstrapTable('load', datas);
+            },
+
+            onUncheck:function(row){
+                var datas = $table.bootstrapTable('getData');
+                selectChilds(datas,row,"id","pid",false);
+                $returnParamTable.bootstrapTable('load', datas);
+            },
+            // bootstrap-table-treetreegrid.js 插件配置 -- end
+        });
+    }
+
+
+    function refreshTable(data){
+        $table.bootstrapTable({
+            data:data,
+            idField: 'id',
+            dataType:'jsonp',
+            columns: [
+                // { field: 'check',  checkbox: true, formatter: function (value, row, index) {
+                //         if (row.check == true) {
+                //             // console.log(row.serverName);
+                //             //设置选中
+                //             return {  checked: true };
+                //         }
+                //     }
+                // },
+                { field: 'id',  title: '序号' },
+                { field: 'name',  title: '参数名称' },
+                // {field: 'id', title: '编号', sortable: true, align: 'center'},
+                // {field: 'pid', title: '所属上级'},
+                { field: 'type',  title: '参数类型', sortable: true,  align: 'center', formatter: 'statusFormatter'  },
+                { field: 'des', title: '描述'  },
+                { field: 'operate', title: '操作', align: 'center', events : operateEvents, formatter: 'operateFormatter' },
+            ],
+
+            // bootstrap-table-treegrid.js 插件配置 -- start
+
+            //在哪一列展开树形
+            treeShowField: 'name',
+            //指定父id列
+            parentIdField: 'pid',
+
+            onResetView: function(data) {
+                //console.log('load');
+                $table.treegrid({
+                    //initialState: 'collapsed',// 所有节点都折叠
+                    initialState: 'expanded',// 所有节点都展开，默认展开
+                    treeColumn: 1,
+                    // expanderExpandedClass: 'glyphicon glyphicon-minus',  //图标样式
+                    // expanderCollapsedClass: 'glyphicon glyphicon-plus',
+                    onChange: function() {
+                        $table.bootstrapTable('resetWidth');
+                    }
+                });
+
+                //只展开树形的第一级节点
+                //$table.treegrid('getRootNodes').treegrid('expand');
+
+            },
+            onCheck:function(row){
+                var datas = $table.bootstrapTable('getData');
+                // 勾选子类
+                selectChilds(datas,row,"id","pid",true);
+
+                // 勾选父类
+                selectParentChecked(datas,row,"id","pid")
+
+                // 刷新数据
+                $table.bootstrapTable('load', datas);
+            },
+
+            onUncheck:function(row){
+                var datas = $table.bootstrapTable('getData');
+                selectChilds(datas,row,"id","pid",false);
+                $table.bootstrapTable('load', datas);
+            },
+            // bootstrap-table-treetreegrid.js 插件配置 -- end
+        });
+    }
+
+
+
+
+
+
+    // 格式化按钮
+    function operateFormatter(value, row, index) {
+        return [
+            '<button type="button"  onclick="setPTypeIn()" class="RoleOfadd btn-small btn-info" style="margin-right:15px;"><i class="fa fa-plus" ></i>新增参数</button>',
+            '<button type="button"  onclick="setPTypeIn()" class="RoleOfedit btn-small btn-success" style="margin-right:15px;"><i class="fa fa-pencil-square-o" ></i>修改</button>',
+            '<button type="button"  onclick="setPTypeIn()" class="RoleOfdelete btn-small btn-danger" style="margin-right:15px;"><i class="fa fa-trash-o" ></i>删除</button>'
+        ].join('');
+
+    }
+
+    // 格式化按钮
+    function returnParamOperateFormatter(value, row, index) {
+        return [
+            '<button type="button"  onclick="setPTypeOut()" class="RoleOfadd btn-small btn-info" style="margin-right:15px;"><i class="fa fa-plus" ></i>新增参数</button>',
+            '<button type="button"  onclick="setPTypeOut()" class="RoleOfedit btn-small btn-success" style="margin-right:15px;"><i class="fa fa-pencil-square-o" ></i>修改</button>',
+            '<button type="button"  onclick="setPTypeOut()" class="RoleOfdelete btn-small btn-danger" style="margin-right:15px;"><i class="fa fa-trash-o" ></i>删除</button>'
+        ].join('');
+
+    }
+
+
+    // 格式化类型
+    function typeFormatter(value, row, index) {
+        if (value === 'menu') {  return '菜单';  }
+        if (value === 'button') {  return '按钮'; }
+        if (value === 'api') {  return '接口'; }
+        return '-';
+    }
+    // 格式化状态
+    function statusFormatter(value, row, index) {
+        // if (value === 1) {
+        //     return '<span class="btn btn-primary">正常</span>';
+        // } else {
+        //     return '<span class="btn btn-primary">锁定</span>';
+        // }
+        return '<span class="btn btn-primary">' + value +'</span>';
+    }
+
+    //初始化操作按钮的方法
+    window.operateEvents = {
+        'click .RoleOfadd': function (e, value, row, index) {
+            add(row.id);
+        },
+        'click .RoleOfdelete': function (e, value, row, index) {
+            del(row.id);
+        },
+        'click .RoleOfedit': function (e, value, row, index) {
+            update(row.id, index);
+        }
+    };
+</script>
+<script>
+    /**
+     * 选中父项时，同时选中子项
+     * @param datas 所有的数据
+     * @param row 当前数据
+     * @param id id 字段名
+     * @param pid 父id字段名
+     */
+    function selectChilds(datas,row,id,pid,checked) {
+        for(var i in datas){
+            if(datas[i][pid] == row[id]){
+                datas[i].check=checked;
+                selectChilds(datas,datas[i],id,pid,checked);
+            };
+        }
+    }
+
+    function selectParentChecked(datas,row,id,pid){
+        for(var i in datas){
+            if(datas[i][id] == row[pid]){
+                datas[i].check=true;
+                selectParentChecked(datas,datas[i],id,pid);
+            };
+        }
+    }
+
+    function test() {
+        var selRows = $table.bootstrapTable("getSelections");
+        if(selRows.length == 0){
+            alert("请至少选择一行");
+            return;
+        }
+
+        var postData = "";
+        $.each(selRows,function(i) {
+            postData +=  this.id;
+            if (i < selRows.length - 1) {
+                postData += "， ";
+            }
+        });
+        alert("你选中行的 id 为："+postData);
+    }
+
+    function setPTypeIn(pType) {
+        debugger;
+        //var pType = $(this).attr("pType");
+        $("#insertParamType").val("in");
+    }
+    function setPTypeOut(pType) {
+        //debugger;
+        //var pType = $(this).attr("pType");
+        $("#insertParamType").val("out");
+    }
+    var itemId = 1;
+    function add(id) {
+        //debugger;
+        //var pType = $(this).attr("pType");
+        $("#parameterModal").modal("show");
+        $("#pid").val(id);
+    }
+
+
+    $("#confirm").click(function(){
+        var paramType = $("#paramType").val();
+        if(paramType == null || paramType == ""){
+            paramType = "String";
+        }
+        var paramName = $("#paramName").val();
+        var paramDes = $("#paramDes").val();
+        var pid = 0;
+        var formPid = $("#pid").val();
+        if(formPid != null && formPid != ""){
+            pid = parseInt(formPid);
+        }
+        var json = {"id":itemId, "pid":pid, "type":paramType, "name":paramName, "des":paramDes};
+        itemId += 1;
+        //var tableName = "";
+        debugger;
+        var insertParamType = $("#insertParamType").val();
+        if(insertParamType=="in"){
+            //var tableName = "table";
+            $('#table').bootstrapTable('append',json);
+        }else if(insertParamType=="out"){
+            //var tableName = "returnParamTable";
+            $('#returnParamTable').bootstrapTable('append',json);
+        }
+
+        //关闭模态框，清空数据
+        $("#parameterModal").modal("hide");
+        document.getElementById("paramInfoForm").reset();
+        $("#pid").val("")
+    });
+
+    //更新确认
+    $("#parameterInfoUpdateConfirm").click(function(){
+        debugger;
+        var paramType = $("#paramTypeUpdate").val();
+        if(paramType == null || paramType == ""){
+            paramType = "String";
+        }
+        var paramName = $("#paramNameUpdate").val();
+        var paramDes = $("#paramDesUpdate").val();
+        var pid = parseInt($("#pidUpdate").val());
+        var id = parseInt($("#idUpdate").val());
+        var index = parseInt($("#index").val());
+        var json = {"id":id, "pid":pid, "type":paramType, "name":paramName, "des":paramDes};
+
+        //或者
+        //$("#table").bootstrapTable('updateRow', {field: 'id', values: id});
+
+
+        var insertParamType = $("#insertParamType").val();
+        if(insertParamType=="in"){
+            $('#table').bootstrapTable('updateRow', {index: index, row: json});
+        }else if(insertParamType=="out"){
+            //var tableName = "returnParamTable";
+            //$('#').bootstrapTable('append',json);
+            $('#returnParamTable').bootstrapTable('updateRow', {index: index, row: json});
+        }
+
+        //关闭模态框
+        $("#parameterModalUpdate").modal("hide");
+    });
+
+
+
+
+    function del(id) {
+        debugger;
+        // alert("del 方法 , id = " + id);
+        // var ids=new Array();
+        // ids.push(data.id);
+        //原理是parseInt https://blog.csdn.net/u014525494/article/details/54880900?depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromBaidu-4&utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromBaidu-4
+        //$("#table").bootstrapTable('remove', {field: 'id', values: [parseInt(id)]});
+        var insertParamType = $("#insertParamType").val();
+        if(insertParamType=="in"){
+            $("#table").bootstrapTable('remove', {field: 'id', values: [parseInt(id)]});
+        }else if(insertParamType=="out"){
+            $("#returnParamTable").bootstrapTable('remove', {field: 'id', values: [parseInt(id)]});
+        }
+    }
+    function update(id, index) {
+        //alert("update 方法 , id = " + id);
+        debugger;
+
+        var rows;
+        var insertParamType = $("#insertParamType").val();
+        if(insertParamType=="in"){
+            //var tableName = "table";
+            rows = $('#table').bootstrapTable('getData');
+        }else if(insertParamType=="out"){
+            //var tableName = "returnParamTable";
+            //$('#').bootstrapTable('append',json);
+            rows = $('#returnParamTable').bootstrapTable('getData');
+        }
+        var i = index;
+        var paramType = rows[i].type;
+        var paramName = rows[i].name;
+        var paramDes = rows[i].des;
+        var pid = rows[i].pid;
+        $("#paramTypeUpdate").val(paramType);
+        $("#paramNameUpdate").val(paramName);
+        $("#paramDesUpdate").val(paramDes);
+        $("#pidUpdate").val(pid);
+        $("#idUpdate").val(id);
+        $("#index").val(index);
+        $("#parameterModalUpdate").modal("show");
+
+
+        //由于数据不是很多，使用笨一些的办法
+        // for(var i=0; i<rows.length; i++){
+        //
+        //
+        //
+        //
+        //     if(rows[i].id == id){
+        //         var paramType = rows[i].type;
+        //         var paramName = rows[i].name;
+        //         var paramDes = rows[i].des;
+        //         var pid = rows[i].pid;
+        //         $("#paramTypeUpdate").val(paramType);
+        //         $("#paramNameUpdate").val(paramName);
+        //         $("#paramDesUpdate").val(paramDes);
+        //         $("#pidUpdate").val(pid);
+        //         $("#idUpdate").val(id);
+        //         $("#parameterModalUpdate").modal("show");
+        //
+        //     }
+        // }
+        //$('#table').bootstrapTable('updateRow', {index: index, row: data});
+        //或者
+        //$("#table").bootstrapTable('updateRow', {field: 'id', values: id});
+    }
+
+
+    function addParameter(){
+        $("#parameterModal").modal("show");
+        $("#insertParamType").val("in");
+    }
+
+    function addReturnParameter(){
+        $("#parameterModal").modal("show");
+        $("#insertParamType").val("out");
+    }
+
+</script>
+</html>

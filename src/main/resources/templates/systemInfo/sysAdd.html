@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)http://getbootstrap.com/docs/4.0/examples/dashboard/ -->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>系统信息添加</title>
+    <!-- Bootstrap core CSS -->
+    <link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.css}" rel="stylesheet">
+
+    <link href="asserts/css/sweetalert.css" th:href="@{/webjars/bootstrap-sweetalert/1.0.1/dist/sweetalert.css}" rel="stylesheet">
+    <!-- Custom styles for this template -->
+    <link href="asserts/css/dashboard.css" th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">
+    <style type="text/css">
+        /* Chart.js */
+
+        @-webkit-keyframes chartjs-render-animation {
+            from {
+                opacity: 0.99
+            }
+            to {
+                opacity: 1
+            }
+        }
+
+        @keyframes chartjs-render-animation {
+            from {
+                opacity: 0.99
+            }
+            to {
+                opacity: 1
+            }
+        }
+
+        .chartjs-render-monitor {
+            -webkit-animation: chartjs-render-animation 0.001s;
+            animation: chartjs-render-animation 0.001s;
+        }
+    </style>
+</head>
+
+<body>
+<!--引入抽取的topbar-->
+<!--模板名：会使用thymeleaf的前后缀配置规则进行解析-->
+<div th:replace="commons/bar::topbar"></div>
+
+<div class="container-fluid">
+    <div class="row">
+        <!--引入侧边栏-->
+        <div th:replace="commons/bar::#sidebar(activeUri='systemInfo')"></div>
+
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+            <!--需要区分是修改还是添加；-->
+            <form th:action="@{/systemInfo}" method="post">
+
+                <input type="hidden" name="_method" value="put" th:if="${systemInfo!=null}"/>
+
+                <div class="form-group">
+                    <label>系统英文名称</label>
+                    <input id="systemNameEN" name="systemNameEN" type="text" class="form-control" placeholder="请输入系统英文名称" th:readonly="${systemInfo!=null}?'readonly'" th:value="${systemInfo!=null}?${systemInfo.systemNameEN}">
+                </div>
+                <div class="form-group">
+                    <label>系统中文名称</label>
+                    <input id="systemName" name="systemName" type="text" class="form-control" placeholder="请输入系统中文名称" th:value="${systemInfo!=null}?${systemInfo.systemName}">
+                </div>
+
+                <button type="submit" class="btn btn-primary" th:text="${systemInfo!=null}?'修改':'添加'">添加</button>
+            </form>
+        </main>
+    </div>
+</div>
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/jquery/3.3.1/jquery.js}"></script>
+<script type="text/javascript" src="asserts/js/popper.min.js" th:src="@{/webjars/popper.js/1.11.1/dist/umd/popper.js}"></script>
+<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/4.0.0/js/bootstrap.js}"></script>
+
+<script type="text/javascript" src="js/sweetalert.min.js" th:src="@{/webjars/bootstrap-sweetalert/1.0.1/dist/sweetalert.js}"></script>
+<script type="text/javascript" src="js/promise.min.js" th:src="@{/webjars/es6-promise/4.2.8/dist/es6-promise.auto.js}"></script>
+<!-- Icons -->
+<script type="text/javascript" src="asserts/js/feather.min.js" th:src="@{/asserts/js/feather.min.js}"></script>
+<script>
+    feather.replace()
+</script>
+<script th:inline="javascript">
+    debugger;
+    $(document).ready(function() {
+        debugger;
+        //重定向页面时，显示提示信息框
+        var sucMsg= [[${sucMsg}]];
+        if (sucMsg!=null){
+
+            if (sucMsg.successStatus == true){
+                swal({
+                    title: "成功!",
+                    text: sucMsg.successMsg,
+                    //type: "success",
+                    //confirmButtonText: "确定"
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }else{
+                swal({
+                    title: "异常!",
+                    text: sucMsg.successMsg,
+                    type: "warning",
+                    confirmButtonText: "确定"
+                });
+            }
+        }
+
+        //ajax实现动态校验是否信息重复
+        //$("#systemName").blur(checkSystemName);
+        //$("#systemNameEN").blur(checkSystemNameEN);
+
+    });
+
+
+</script>
+</body>
+
+</html>
