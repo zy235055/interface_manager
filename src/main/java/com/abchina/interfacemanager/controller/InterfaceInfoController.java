@@ -74,6 +74,7 @@ public class InterfaceInfoController {
     }
 
 
+    //测试一下
     @GetMapping("/toTestUIPage")
     public String toTestUIPage(){
         return "demo/demoTree2";
